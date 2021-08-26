@@ -19,6 +19,9 @@ class MyImu(object):
         self.orientation_y = 0
         self.orientation_z = 0
         self.DEG_PER_RAD = 57.29577951
+        self.LIMIT_UPRIGHT = 1
+        self.IMU_MIN_DEGREE = -15*3/2
+        self.IMU_MAX_DEGREE = 15*3/2
         imu_subsriber = rospy.Subscriber("/imu_oped/data", Imu, self.imuCallback)
 
 
@@ -38,7 +41,7 @@ class Leg(object):
         self.RAD_PER_DEG = 0.017453293
         self.MIN_DEGREE = -11.4592
         self.MAX_DEGREE = 68.7549 #57.2958
-        self.MOVE_STEP = 8
+        self.MOVE_STEP = 1
 
         self.lf = 0
         self.lh = 0
@@ -144,6 +147,10 @@ class Quadruped(Leg, MyImu) :
         self.y = 0
         self.z = 0.8
         self.MODEL_URDF = '/home/dayatsa/model_editor_models/oped/src/oped/oped_description/urdf/oped.urdf'
+        self.ACTION_N = 16
+        self.STATE_SPACE = 7
+        self.MAX_EPISODE = 200
+        self.episode_step = 0
         Leg.__init__(self)
         MyImu.__init__(self)
 
@@ -152,7 +159,7 @@ class Quadruped(Leg, MyImu) :
         return str(self.x + ", " + self.y + ", " + self.z)
 
 
-    def action(self, choice):
+    def step(self, choice):
         '''
         Gives us 16 total movement options.
         '''
@@ -191,12 +198,28 @@ class Quadruped(Leg, MyImu) :
             self.addPosition(-1,-1,0,0)
         elif choice == 15:
             self.addPosition(-1,0,0,-1)
-    
+
+        new_state = self.getState()
+        x = new_state[4]
+        y = new_state[5]
+
+        reward = 0
+        if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
+            reward += 1
+        if y > -self.LIMIT_UPRIGHT and y < self.LIMIT_UPRIGHT:
+            reward += 1
+
+        done = False
+        if (x < IMU_MIN_DEGREE or x > IMU_MAX_DEGREE) or (y < IMU_MIN_DEGREE or y > IMU_MAX_DEGREE) or self.episode_step >= self.MAX_EPISODE:
+            done = True
+
+        return new_state, reward, done
 
     def resetWorld(self):
         rospy.wait_for_service('/gazebo/reset_world')
         reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
         reset_world()
+        self.episode_step = 0
 
     
     def spawnURDF(self, name, description_xml, ns, pose, reference_frame='world'):
@@ -227,4 +250,11 @@ class Quadruped(Leg, MyImu) :
                 'x':imu_data[0],
                 'y':imu_data[1],
                 'z':imu_data[2]}
+        return data
+
+    
+    def getState(self):
+        leg_position = self.getLegPosition()
+        imu_data = self.getImuData()
+        data = [leg_position[0], leg_position[1], leg_position[2], leg_position[3], imu_data[0], imu_data[1], imu_data[2]]
         return data
