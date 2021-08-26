@@ -1,0 +1,8 @@
+hip 0.4, 0.4
+
+gerakan dari 
+lf upper leg -0.2, 1 == 3/2* lf lower leg -0.3, 1.5
+
+
+pitch -0.1299, 0.124 => imu.y    -7.391, 7.10
+roll -0.131, 0.141 => imu.x      -7.505, 8.079

@@ -74,7 +74,7 @@
         </node>
         
         <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz"
-            args="-d $(find oped_description)/rviz/urdf_viewer1.rviz -f $(arg rviz_ref_frame)"
+            args="-d $(find oped_description)/rviz/urdf_viewer.rviz -f $(arg rviz_ref_frame)"
             output="screen"/>
     </group>
 </launch>
