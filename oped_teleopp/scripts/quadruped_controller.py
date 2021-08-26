@@ -8,7 +8,7 @@ from std_srvs.srv import Empty
 from geometry_msgs.msg import Pose, Point, Quaternion
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from sensor_msgs.msg import Imu
-import roslib; roslib.load_manifest('oped_teleop')
+import roslib; roslib.load_manifest('oped_teleopp')
 import numpy as np
 import rospy
 
@@ -127,8 +127,8 @@ class Leg(object):
         point.positions = self.leg_position #position
 
         joints_msg.points = [point]
-        rospy.loginfo(joints_msg)
-        rospy.loginfo("---")
+        # rospy.loginfo(joints_msg)
+        # rospy.loginfo("---")
 
         self.joint_group_publisher.publish(joints_msg)
 

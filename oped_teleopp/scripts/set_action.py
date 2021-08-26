@@ -4,7 +4,7 @@
 from quadruped_controller import *
 from floor_controller import *
 import rospy
-import roslib; roslib.load_manifest('oped_teleop')
+import roslib; roslib.load_manifest('oped_teleopp')
 
 
 # leg = Quadruped()

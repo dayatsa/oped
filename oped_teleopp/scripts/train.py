@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-import roslib; roslib.load_manifest('oped_teleop')
+import roslib; roslib.load_manifest('oped_teleopp')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -74,14 +74,15 @@ def train():
         rospy.loginfo("Resetting World")
         floor.setInitialPosition()
         oped.setInitialPosition()
+        rospy.sleep(0.5)
         floor.resetWorld()
-        oped.resetWorld()
-        rospy.sleep(1)
+        rospy.sleep(0.5)
 
 
-        floor_position = 0
-        set_point_floor = np.random.uniform(floor.MIN_DEGREE, floor.MAX_DEGREE)
-        set_point_floor_adder = set_point_floor/300
+        floor_position_x = 0
+        floor_position_y = 0
+        set_point_floor_x_adder = np.random.uniform(floor.MIN_DEGREE, floor.MAX_DEGREE)/300
+        set_point_floor_y_adder = np.random.uniform(floor.MIN_DEGREE, floor.MAX_DEGREE)/300
 
         # if episode % SHOW_EVERY == 0:
         rospy.loginfo("on #" + str(episode) + ", epsilon is " + str(epsilon))
@@ -91,8 +92,9 @@ def train():
         for i in range(300):
             x = np.random.randint(0,9)
 
-            floor.setPosition(floor_position,0)
-            floor_position += set_point_floor_adder
+            floor.setPosition(floor_position_x, floor_position_y)
+            floor_position_x += set_point_floor_x_adder
+            floor_position_y += set_point_floor_y_adder
 
             action = oped.action(x)
             lf, lh, rf, rh, x, y, z = getData()

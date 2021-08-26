@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-import roslib; roslib.load_manifest('oped_teleop')
+import roslib; roslib.load_manifest('oped_teleopp')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
