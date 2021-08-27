@@ -19,7 +19,7 @@ class MyImu(object):
         self.orientation_y = 0
         self.orientation_z = 0
         self.DEG_PER_RAD = 57.29577951
-        self.LIMIT_UPRIGHT = 1
+        self.LIMIT_UPRIGHT = 0.5
         self.IMU_MIN_DEGREE = -15*3/2
         self.IMU_MAX_DEGREE = 15*3/2
         imu_subsriber = rospy.Subscriber("/imu_oped/data", Imu, self.imuCallback)
@@ -41,7 +41,7 @@ class Leg(object):
         self.RAD_PER_DEG = 0.017453293
         self.MIN_DEGREE = -11.4592
         self.MAX_DEGREE = 68.7549 #57.2958
-        self.MOVE_STEP = 1
+        self.MOVE_STEP = 3
 
         self.lf = 0
         self.lh = 0
@@ -163,6 +163,8 @@ class Quadruped(Leg, MyImu) :
         '''
         Gives us 16 total movement options.
         '''
+        self.episode_step += 1
+
         if choice == 0:
             self.addPosition(0,0,0,1)
         elif choice == 1:
@@ -210,10 +212,19 @@ class Quadruped(Leg, MyImu) :
             reward += 1
 
         done = False
-        if (x < IMU_MIN_DEGREE or x > IMU_MAX_DEGREE) or (y < IMU_MIN_DEGREE or y > IMU_MAX_DEGREE) or self.episode_step >= self.MAX_EPISODE:
+        if (x < self.IMU_MIN_DEGREE or x > self.IMU_MAX_DEGREE):
             done = True
+            rospy.loginfo("x imu")
+        if (y < self.IMU_MIN_DEGREE or y > self.IMU_MAX_DEGREE):
+            done = True
+            rospy.loginfo("y imu")
+        if self.episode_step >= self.MAX_EPISODE:
+            done = True
+            rospy.loginfo("max_episode")
 
+        # rospy.loginfo("Step" + str(self.episode_step) + " : " + str(done))
         return new_state, reward, done
+
 
     def resetWorld(self):
         rospy.wait_for_service('/gazebo/reset_world')
