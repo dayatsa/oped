@@ -18,15 +18,19 @@ from tensorflow       import keras
 
 
 class DQNAgent():
-    def __init__(self, state_size, action_size, episode):
-        self.is_weight_backup   = False
+    def __init__(self, state_size, action_size, episodes):
+        self.is_weight_backup   = True
         self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_"
+        self.WEIGHT_LOAD        = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_28-08-2021_09:14.h5"
         self.STATE_SIZE         = state_size
         self.ACTION_SIZE        = action_size
         self.LEARNING_RATE      = 0.001
         self.GAMMA              = 0.95
         self.EXPLORATION_MIN    = 0.01
-        self.EXPLORATION_DECAY  = 1.0/episode
+        self.START_EXPLORATION_DECAY = 1
+        self.END_EXPLORATION_DECAY = episodes//2
+        self.EXPLORATION_DECAY  = 1.0/float(self.END_EXPLORATION_DECAY - self.START_EXPLORATION_DECAY)
+        print("Exploration decay: {} , {} , {}".format(self.START_EXPLORATION_DECAY, self.END_EXPLORATION_DECAY, self.EXPLORATION_DECAY))
         self.exploration_rate   = 1.0
         self.memory             = deque(maxlen=2000)
         self.model              = self.buildModel()
@@ -41,8 +45,9 @@ class DQNAgent():
         model.compile(loss='mse', optimizer=tf.keras.optimizers.Adam(lr=self.LEARNING_RATE))
         
         if self.is_weight_backup is True:
-            model.load_weights(self.WEIGHT_BACKUP)
-            self.exploration_rate = self.EXPLORATION_MIN
+            print("\n\n=============Loading saved model==============\n\n")
+            model.load_weights(self.WEIGHT_LOAD)
+            # self.exploration_rate = self.EXPLORATION_MIN
         return model
 
 
@@ -63,7 +68,7 @@ class DQNAgent():
         self.memory.append((state, action, reward, next_state, done))
 
 
-    def replay(self, sample_batch_size):
+    def replay(self, sample_batch_size, epsilon):
         if len(self.memory) < sample_batch_size:
             return
         sample_batch = random.sample(self.memory, sample_batch_size)
@@ -76,5 +81,7 @@ class DQNAgent():
             self.model.fit(state, target_f, epochs=1, verbose=0)
         
         print("Exploration rate: {}".format(self.exploration_rate))
-        if self.exploration_rate > self.EXPLORATION_MIN:
-            self.exploration_rate -= self.EXPLORATION_DECAY
+        if self.END_EXPLORATION_DECAY >= epsilon >= self.START_EXPLORATION_DECAY:
+            if self.exploration_rate > self.EXPLORATION_MIN:
+                self.exploration_rate -= self.EXPLORATION_DECAY
+                # print("Exploration decay: {} , {}".format(self.exploration_rate, self.EXPLORATION_DECAY))

@@ -19,13 +19,14 @@ from floor_controller import *
 class OpedTrainer:
     def __init__(self):
         self.SAMPLE_BATCH_SIZE = 32
-        self.EPISODES          = 1000
+        self.EPISODES          = 5000
 
         self.oped              = Quadruped()
         self.floor             = Floor()
         self.STATE_SPACE       = self.oped.STATE_SPACE
         self.ACTION_SIZE       = self.oped.ACTION_N
         self.MAX_EPISODE       = self.oped.MAX_EPISODE
+        self.STATS_EVERY       = 20
         self.agent             = DQNAgent(self.STATE_SPACE, self.ACTION_SIZE, self.EPISODES)        
         self.floor_position_x  = 0
         self.floor_position_y  = 0
@@ -43,9 +44,9 @@ class OpedTrainer:
     def resetEnvironment(self):
         self.floor.setInitialPosition()
         self.oped.setInitialPosition()
-        rospy.sleep(0.5)
+        rospy.sleep(0.2)
         self.oped.resetWorld()
-        rospy.sleep(0.5)
+        rospy.sleep(0.3)
         self.getFloorSetPoint()
         return self.oped.getState()
 
@@ -67,16 +68,18 @@ class OpedTrainer:
 
 
     def run(self):
-        aggr_ep_rewards = {'ep': [], 'rewards': []}
+        ep_rewards = []
+        aggr_ep_rewards = {'ep': [], 'avg': [], 'max': [], 'min': []}
         try:
             for index_episode in range(self.EPISODES):
-                print("Reset Environment")
+                print()
+                # print("Reset Environment")
                 state = self.resetEnvironment()
                 state = np.reshape(state, [1, self.STATE_SPACE])
 
                 done = False
                 episode_reward = 0
-
+                index = 0 
                 while not done:
                     action = self.agent.action(state)
                     next_state, reward, done = self.oped.step(action)
@@ -85,17 +88,31 @@ class OpedTrainer:
                     self.agent.remember(state, action, reward, next_state, done)
                     state = next_state
                     episode_reward += reward
+                    index += 1
                     rate.sleep()
 
-                print("Episode {} # Reward: {}".format(index_episode, episode_reward))
-                aggr_ep_rewards['ep'].append(index_episode)
-                aggr_ep_rewards['rewards'].append(episode_reward)
-                self.agent.replay(self.SAMPLE_BATCH_SIZE)
+                print("Episode {}, index: {}, # Reward: {}".format(index_episode, index, episode_reward))
+                self.agent.replay(self.SAMPLE_BATCH_SIZE, index_episode)
+
+                ep_rewards.append(episode_reward)
+                if not index_episode % self.STATS_EVERY:
+                    average_reward = sum(ep_rewards[-self.STATS_EVERY:])/self.STATS_EVERY
+                    aggr_ep_rewards['ep'].append(index_episode)
+                    aggr_ep_rewards['avg'].append(average_reward)
+                    aggr_ep_rewards['max'].append(max(ep_rewards[-self.STATS_EVERY:]))
+                    aggr_ep_rewards['min'].append(min(ep_rewards[-self.STATS_EVERY:]))
+                    print("Episode: {}, average reward: {}".format(index_episode, average_reward))
+                    ep_rewards = []
 
         finally:
             self.agent.saveModel()
+            # reward_cumulative = {"aggr_rewards":aggr_ep_rewards, "rewards":ep_rewards}
             self.saveRewardValue(aggr_ep_rewards)
-            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['rewards'], label="rewards")
+
+            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label="average rewards")
+            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['max'], label="max rewards")
+            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['min'], label="min rewards")
+            plt.legend(loc=4)
             plt.show()
 
 
