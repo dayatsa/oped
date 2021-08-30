@@ -19,7 +19,7 @@ from floor_controller import *
 class OpedTrainer:
     def __init__(self):
         self.SAMPLE_BATCH_SIZE = 32
-        self.EPISODES          = 5000
+        self.EPISODES          = 1200
 
         self.oped              = Quadruped()
         self.floor             = Floor()
@@ -32,14 +32,24 @@ class OpedTrainer:
         self.floor_position_y  = 0
         self.set_point_floor_x_adder = 0
         self.set_point_floor_y_adder = 0
+        self.now               = datetime.now()
+        self.dt_start_string   = self.now.strftime("%d-%m-%Y_%H:%M")
 
     
     def getFloorSetPoint(self):
         self.floor_position_x = 0
         self.floor_position_y = 0
-        self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, self.floor.MAX_DEGREE)/self.MAX_EPISODE
-        self.set_point_floor_y_adder = np.random.uniform(self.floor.MIN_DEGREE, self.floor.MAX_DEGREE)/self.MAX_EPISODE
-    
+
+        if np.random.rand() < 0.5:
+            self.set_point_floor_x_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+        else:
+            self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+        
+        if np.random.rand() < 0.5:
+            self.set_point_floor_y_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+        else:
+            self.set_point_floor_y_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+
 
     def resetEnvironment(self):
         self.floor.setInitialPosition()
@@ -58,12 +68,21 @@ class OpedTrainer:
 
     
     def saveRewardValue(self, my_dict):
-        now = datetime.now()
-        dt_string = now.strftime("%d-%m-%Y_%H:%M")
+        self.now = datetime.now()
+        dt_string = self.now.strftime("%d-%m-%Y_%H:%M")
+
+        dict_model   = {"lr":self.agent.LEARNING_RATE,
+                        "gamma":self.agent.GAMMA,
+                        "move_step":self.oped.MOVE_STEP,
+                        "limit_upright":self.oped.LIMIT_UPRIGHT,
+                        "action_size":self.oped.ACTION_N,
+                        "start_date":self.dt_start_string,
+                        "end_date":dt_string,
+                        "rewards":my_dict}
 
         path = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/rewards/reward" + dt_string + ".json"
         with open(path, 'w') as fp:
-            json.dump(my_dict, fp)
+            json.dump(dict_model, fp)
 
 
 
@@ -91,7 +110,7 @@ class OpedTrainer:
                     index += 1
                     rate.sleep()
 
-                print("Episode {}, index: {}, # Reward: {}".format(index_episode, index, episode_reward))
+                print("Episode {}, index: {}, x: {}, y: {}, # Reward: {}".format(index_episode, index, self.floor_position_x, self.floor_position_y, episode_reward))
                 self.agent.replay(self.SAMPLE_BATCH_SIZE, index_episode)
 
                 ep_rewards.append(episode_reward)

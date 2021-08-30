@@ -19,7 +19,7 @@ from tensorflow       import keras
 
 class DQNAgent():
     def __init__(self, state_size, action_size, episodes):
-        self.is_weight_backup   = True
+        self.is_weight_backup   = False
         self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_"
         self.WEIGHT_LOAD        = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_28-08-2021_09:14.h5"
         self.STATE_SIZE         = state_size
@@ -28,7 +28,7 @@ class DQNAgent():
         self.GAMMA              = 0.95
         self.EXPLORATION_MIN    = 0.01
         self.START_EXPLORATION_DECAY = 1
-        self.END_EXPLORATION_DECAY = episodes//2
+        self.END_EXPLORATION_DECAY = episodes*3//4#episodes//2
         self.EXPLORATION_DECAY  = 1.0/float(self.END_EXPLORATION_DECAY - self.START_EXPLORATION_DECAY)
         print("Exploration decay: {} , {} , {}".format(self.START_EXPLORATION_DECAY, self.END_EXPLORATION_DECAY, self.EXPLORATION_DECAY))
         self.exploration_rate   = 1.0
@@ -40,7 +40,9 @@ class DQNAgent():
         # Neural Net for Deep-Q learning Model
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Dense(24, input_dim=self.STATE_SIZE, activation='relu'))
-        model.add(tf.keras.layers.Dense(32, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.2))
+        model.add(tf.keras.layers.Dense(24, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.ACTION_SIZE, activation='linear'))
         model.compile(loss='mse', optimizer=tf.keras.optimizers.Adam(lr=self.LEARNING_RATE))
         
