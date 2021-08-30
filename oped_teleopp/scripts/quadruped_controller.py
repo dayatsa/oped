@@ -205,11 +205,23 @@ class Quadruped(Leg, MyImu) :
         x = new_state[4]
         y = new_state[5]
 
+        #reward
         reward = 0
         if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
-            reward += 1
+            reward += 50
+        else:
+            if x < 0:
+                reward += x
+            else:
+                reward -= x
+
         if y > -self.LIMIT_UPRIGHT and y < self.LIMIT_UPRIGHT:
-            reward += 1
+            reward += 50
+        else:
+            if y < 0:
+                reward += y
+            else:
+                reward -= y
 
         done = False
         if (x < self.IMU_MIN_DEGREE or x > self.IMU_MAX_DEGREE):
