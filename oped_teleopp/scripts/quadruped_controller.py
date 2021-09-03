@@ -208,7 +208,7 @@ class Quadruped(Leg, MyImu) :
         #reward
         reward = 0
         if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
-            reward += 50
+            reward += 100
         else:
             if x < 0:
                 reward += x
@@ -216,7 +216,7 @@ class Quadruped(Leg, MyImu) :
                 reward -= x
 
         if y > -self.LIMIT_UPRIGHT and y < self.LIMIT_UPRIGHT:
-            reward += 50
+            reward += 100
         else:
             if y < 0:
                 reward += y

@@ -19,9 +19,9 @@ from tensorflow       import keras
 
 class DQNAgent():
     def __init__(self, state_size, action_size, episodes):
-        self.is_weight_backup   = False
+        self.is_weight_backup   = True
         self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_"
-        self.WEIGHT_LOAD        = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_28-08-2021_09:14.h5"
+        self.WEIGHT_LOAD        = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_01-09-2021_11:53.h5"
         self.STATE_SIZE         = state_size
         self.ACTION_SIZE        = action_size
         self.LEARNING_RATE      = 0.001
@@ -32,7 +32,7 @@ class DQNAgent():
         self.EXPLORATION_DECAY  = 1.0/float(self.END_EXPLORATION_DECAY - self.START_EXPLORATION_DECAY)
         print("Exploration decay: {} , {} , {}".format(self.START_EXPLORATION_DECAY, self.END_EXPLORATION_DECAY, self.EXPLORATION_DECAY))
         self.exploration_rate   = 1.0
-        self.memory             = deque(maxlen=2000)
+        self.memory             = deque(maxlen=300)
         self.model              = self.buildModel()
 
 
@@ -72,6 +72,7 @@ class DQNAgent():
 
     def replay(self, sample_batch_size, epsilon):
         if len(self.memory) < sample_batch_size:
+            print("SAMPLE BATCH SIZE")
             return
         sample_batch = random.sample(self.memory, sample_batch_size)
         for state, action, reward, next_state, done in sample_batch:

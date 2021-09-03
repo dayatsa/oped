@@ -18,8 +18,8 @@ from floor_controller import *
 
 class OpedTrainer:
     def __init__(self):
-        self.SAMPLE_BATCH_SIZE = 32
-        self.EPISODES          = 1200
+        self.SAMPLE_BATCH_SIZE = 200
+        self.EPISODES          = 5000
 
         self.oped              = Quadruped()
         self.floor             = Floor()
