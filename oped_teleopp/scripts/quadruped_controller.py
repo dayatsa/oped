@@ -19,7 +19,7 @@ class MyImu(object):
         self.orientation_y = 0
         self.orientation_z = 0
         self.DEG_PER_RAD = 57.29577951
-        self.LIMIT_UPRIGHT = 0.7
+        self.LIMIT_UPRIGHT = 0.5
         self.IMU_MIN_DEGREE = -15*3/2
         self.IMU_MAX_DEGREE = 15*3/2
         imu_subsriber = rospy.Subscriber("/imu_oped/data", Imu, self.imuCallback)
@@ -41,7 +41,7 @@ class Leg(object):
         self.RAD_PER_DEG = 0.017453293
         self.MIN_DEGREE = -11.4592
         self.MAX_DEGREE = 68.7549 #57.2958
-        self.MOVE_STEP = 3.0
+        self.MOVE_STEP = 1.0
 
         self.lf = 0
         self.lh = 0
@@ -148,7 +148,7 @@ class Quadruped(Leg, MyImu) :
         self.z = 0.8
         self.MODEL_URDF = '/home/dayatsa/model_editor_models/oped/src/oped/oped_description/urdf/oped.urdf'
         self.ACTION_N = 8
-        self.STATE_SPACE = 7
+        self.STATE_SPACE = 6
         self.MAX_EPISODE = 200
         self.episode_step = 0
         Leg.__init__(self)
@@ -279,5 +279,5 @@ class Quadruped(Leg, MyImu) :
     def getState(self):
         leg_position = self.getLegPosition()
         imu_data = self.getImuData()
-        data = [leg_position[0], leg_position[1], leg_position[2], leg_position[3], imu_data[0], imu_data[1], imu_data[2]]
+        data = [leg_position[0], leg_position[1], leg_position[2], leg_position[3], imu_data[0], imu_data[1]]
         return data

@@ -19,7 +19,7 @@ from tensorflow       import keras
 
 class DQNAgent():
     def __init__(self, state_size, action_size, episodes):
-        self.is_weight_backup   = True
+        self.is_weight_backup   = False
         self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_"
         self.WEIGHT_LOAD        = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_01-09-2021_11:53.h5"
         self.STATE_SIZE         = state_size
@@ -28,21 +28,21 @@ class DQNAgent():
         self.GAMMA              = 0.95
         self.EXPLORATION_MIN    = 0.01
         self.START_EXPLORATION_DECAY = 1
-        self.END_EXPLORATION_DECAY = episodes*3//4#episodes//2
-        self.EXPLORATION_DECAY  = 1.0/float(self.END_EXPLORATION_DECAY - self.START_EXPLORATION_DECAY)
+        self.END_EXPLORATION_DECAY = episodes//2
+        self.EXPLORATION_DECAY  = 0.999975#1.0/float(self.END_EXPLORATION_DECAY - self.START_EXPLORATION_DECAY)
         print("Exploration decay: {} , {} , {}".format(self.START_EXPLORATION_DECAY, self.END_EXPLORATION_DECAY, self.EXPLORATION_DECAY))
         self.exploration_rate   = 1.0
-        self.memory             = deque(maxlen=300)
+        self.memory             = deque(maxlen=1000000)
         self.model              = self.buildModel()
 
 
     def buildModel(self):
         # Neural Net for Deep-Q learning Model
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Dense(24, input_dim=self.STATE_SIZE, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.2))
+        model.add(tf.keras.layers.Dense(24, input_shape=(self.STATE_SIZE,), activation='relu'))
+        # model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(24, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.2))
+        # model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.ACTION_SIZE, activation='linear'))
         model.compile(loss='mse', optimizer=tf.keras.optimizers.Adam(lr=self.LEARNING_RATE))
         
@@ -60,7 +60,7 @@ class DQNAgent():
 
 
     def action(self, state):
-        if np.random.rand() <= self.exploration_rate:
+        if np.random.rand() < self.exploration_rate:
             return random.randrange(self.ACTION_SIZE)
         action_values = self.model.predict(state)
         return np.argmax(action_values[0])
@@ -83,8 +83,9 @@ class DQNAgent():
             target_f[0][action] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
         
-        print("Exploration rate: {}".format(self.exploration_rate))
+        # print("Exploration rate: {}".format(self.exploration_rate))
         if self.END_EXPLORATION_DECAY >= epsilon >= self.START_EXPLORATION_DECAY:
             if self.exploration_rate > self.EXPLORATION_MIN:
-                self.exploration_rate -= self.EXPLORATION_DECAY
+                # self.exploration_rate -= self.EXPLORATION_DECAY
+                self.exploration_rate *= self.EXPLORATION_DECAY
                 # print("Exploration decay: {} , {}".format(self.exploration_rate, self.EXPLORATION_DECAY))

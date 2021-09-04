@@ -18,8 +18,8 @@ from floor_controller import *
 
 class OpedTrainer:
     def __init__(self):
-        self.SAMPLE_BATCH_SIZE = 200
-        self.EPISODES          = 5000
+        self.SAMPLE_BATCH_SIZE = 20
+        self.EPISODES          = 2000
 
         self.oped              = Quadruped()
         self.floor             = Floor()
@@ -56,7 +56,7 @@ class OpedTrainer:
         self.oped.setInitialPosition()
         rospy.sleep(0.2)
         self.oped.resetWorld()
-        rospy.sleep(0.3)
+        rospy.sleep(0.5)
         self.getFloorSetPoint()
         return self.oped.getState()
 
@@ -95,11 +95,12 @@ class OpedTrainer:
                 # print("Reset Environment")
                 state = self.resetEnvironment()
                 state = np.reshape(state, [1, self.STATE_SPACE])
+                print(state)
 
                 done = False
                 episode_reward = 0
                 index = 0 
-                while not done:
+                while True:
                     action = self.agent.action(state)
                     next_state, reward, done = self.oped.step(action)
                     next_state = np.reshape(next_state, [1, self.STATE_SPACE])
@@ -108,10 +109,14 @@ class OpedTrainer:
                     state = next_state
                     episode_reward += reward
                     index += 1
-                    rate.sleep()
-
-                print("Episode {}, index: {}, x: {}, y: {}, # Reward: {}".format(index_episode, index, self.floor_position_x, self.floor_position_y, episode_reward))
-                self.agent.replay(self.SAMPLE_BATCH_SIZE, index_episode)
+                    if done:
+                        print("Episode {}, index: {}, # Reward: {}".format(index_episode, index, episode_reward))
+                        print("Exploration: {}, x: {}, y: {}".format(self.agent.exploration_rate, self.floor_position_x, self.floor_position_y))
+                        break
+                    self.agent.replay(self.SAMPLE_BATCH_SIZE, index_episode)
+                    rate.sleep()    
+                
+               
 
                 ep_rewards.append(episode_reward)
                 if not index_episode % self.STATS_EVERY:
