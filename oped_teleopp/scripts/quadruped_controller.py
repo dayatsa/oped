@@ -43,10 +43,12 @@ class Leg(object):
         self.MAX_DEGREE = 68.7549 #57.2958
         self.MOVE_STEP = 1.0
 
-        self.lf = 0
-        self.lh = 0
-        self.rf = 0
-        self.rh = 0
+        self.lf = 0.0
+        self.lh = 0.0
+        self.rf = 0.0
+        self.rh = 0.0
+        self.initial_position = 30.0
+        self.leg_y = 0.0
         self.leg_position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_names = ['lf_hip_joint', 'lf_upper_leg_joint', 'lf_lower_leg_joint', 'lh_hip_joint', 'lh_upper_leg_joint', 'lh_lower_leg_joint', 'rf_hip_joint', 'rf_upper_leg_joint', 'rf_lower_leg_joint', 'rh_hip_joint', 'rh_upper_leg_joint', 'rh_lower_leg_joint']
         
@@ -62,29 +64,32 @@ class Leg(object):
         return lf, lh, rf, rh
 
 
-    def addPosition(self, lf, lh, rf, rh):
-        self.lf = self.lf + lf*self.MOVE_STEP
-        self.lh = self.lh + lh*self.MOVE_STEP
-        self.rf = self.rf + rf*self.MOVE_STEP
-        self.rh = self.rh + rh*self.MOVE_STEP
+    def addPosition(self, step_y):
+
+        self.leg_y = self.leg_y + step_y*self.MOVE_STEP
+
+        self.lf = self.initial_position + self.leg_y
+        self.lh = self.initial_position - self.leg_y
+        self.rf = self.initial_position + self.leg_y
+        self.rh = self.initial_position - self.leg_y
 
         if self.lf > self.MAX_DEGREE:
-            self.lf = self.lf - self.MOVE_STEP
+            self.lf = self.MAX_DEGREE
         if self.lh > self.MAX_DEGREE:
-            self.lh = self.lh - self.MOVE_STEP
+            self.lh = self.MAX_DEGREE
         if self.rf > self.MAX_DEGREE:
-            self.rf = self.rf - self.MOVE_STEP
+            self.rf = self.MAX_DEGREE
         if self.rh > self.MAX_DEGREE:
-            self.rh = self.rh - self.MOVE_STEP
+            self.rh = self.MAX_DEGREE
 
         if self.lf < self.MIN_DEGREE:
-            self.lf = self.lf + self.MOVE_STEP
+            self.lf = self.MIN_DEGREE
         if self.lh < self.MIN_DEGREE:
-            self.lh = self.lh + self.MOVE_STEP
+            self.lh = self.MIN_DEGREE
         if self.rf < self.MIN_DEGREE:
-            self.rf = self.rf + self.MOVE_STEP
+            self.rf = self.MIN_DEGREE
         if self.rh < self.MIN_DEGREE:
-            self.rh = self.rh + self.MOVE_STEP              
+            self.rh = self.MIN_DEGREE          
 
         self.setPosition(self.lf, self.lh, self.rf, self.rh)
 
@@ -113,11 +118,12 @@ class Leg(object):
 
     
     def setInitialPosition(self):
-        self.lf = 0
-        self.lh = 0
-        self.rf = 0
-        self.rh = 0
-        self.setPosition(0,0,0,0)
+        self.leg_y = 0.0
+        self.lf = 30.0
+        self.lh = 30.0
+        self.rf = 30.0
+        self.rh = 30.0
+        self.setPosition(30.0,30.0,30.0,30.0)
 
 
     def publishPosition(self):
@@ -143,12 +149,12 @@ class Leg(object):
 
 class Quadruped(Leg, MyImu) : 
     def __init__(self):
-        self.x = 0
-        self.y = 0
+        self.x = 0.0
+        self.y = 0.0
         self.z = 0.8
         self.MODEL_URDF = '/home/dayatsa/model_editor_models/oped/src/oped/oped_description/urdf/oped.urdf'
-        self.ACTION_N = 8
-        self.STATE_SPACE = 6
+        self.ACTION_N = 2
+        self.STATE_SPACE = 2
         self.MAX_EPISODE = 200
         self.episode_step = 0
         Leg.__init__(self)
@@ -161,59 +167,29 @@ class Quadruped(Leg, MyImu) :
 
     def step(self, choice):
         '''
-        Gives us 16 total movement options.
+        Gives us 2 total movement options.
         '''
         self.episode_step += 1
 
         if choice == 0:
-            self.addPosition(0,0,0,1)
+            self.addPosition(1)
         elif choice == 1:
-            self.addPosition(0,0,1,0)
-        elif choice == 2:
-            self.addPosition(0,1,0,0)
-        elif choice == 3:
-            self.addPosition(1,0,0,0)
-            
-        elif choice == 4:
-            self.addPosition(0,0,0,-1)
-        elif choice == 5:
-            self.addPosition(0,0,-1,0)
-        elif choice == 6:
-            self.addPosition(0,-1,0,0)
-        elif choice == 7:
-            self.addPosition(-1,0,0,0)
+            self.addPosition(-1)
 
-        elif choice == 8:
-            self.addPosition(0,0,1,1)
-        elif choice == 9:
-            self.addPosition(0,1,1,0)
-        elif choice == 10:
-            self.addPosition(1,1,0,0)
-        elif choice == 11:
-            self.addPosition(1,0,0,1)
-            
-        elif choice == 12:
-            self.addPosition(0,0,-1,-1)
-        elif choice == 13:
-            self.addPosition(0,-1,-1,0)
-        elif choice == 14:
-            self.addPosition(-1,-1,0,0)
-        elif choice == 15:
-            self.addPosition(-1,0,0,-1)
 
         new_state = self.getState()
-        x = new_state[4]
-        y = new_state[5]
+        # x = new_state[4]
+        y = new_state[1]
 
         #reward
         reward = 0
-        if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
-            reward += 100
-        else:
-            if x < 0:
-                reward += x
-            else:
-                reward -= x
+        # if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
+        #     reward += 100
+        # else:
+        #     if x < 0:
+        #         reward += x
+        #     else:
+        #         reward -= x
 
         if y > -self.LIMIT_UPRIGHT and y < self.LIMIT_UPRIGHT:
             reward += 100
@@ -224,9 +200,9 @@ class Quadruped(Leg, MyImu) :
                 reward -= y
 
         done = False
-        if (x < self.IMU_MIN_DEGREE or x > self.IMU_MAX_DEGREE):
-            done = True
-            rospy.loginfo("x imu")
+        # if (x < self.IMU_MIN_DEGREE or x > self.IMU_MAX_DEGREE):
+        #     done = True
+        #     rospy.loginfo("x imu")
         if (y < self.IMU_MIN_DEGREE or y > self.IMU_MAX_DEGREE):
             done = True
             rospy.loginfo("y imu")
@@ -277,7 +253,6 @@ class Quadruped(Leg, MyImu) :
 
     
     def getState(self):
-        leg_position = self.getLegPosition()
         imu_data = self.getImuData()
-        data = [leg_position[0], leg_position[1], leg_position[2], leg_position[3], imu_data[0], imu_data[1]]
+        data = [self.leg_y, imu_data[1]]
         return data

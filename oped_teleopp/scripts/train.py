@@ -1,182 +1,150 @@
 #!/usr/bin/env python2
 
+from __future__ import print_function
 import rospy
 import roslib; roslib.load_manifest('oped_teleopp')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import pickle
+import random
+import os
+import numpy as np
+import json
+from datetime import datetime
+from agent import *
 from quadruped_controller import *
 from floor_controller import *
 
 
-HM_EPISODES = 25000
-MOVE_PENALTY = 1  
-FALL_PENALTY = -300  
-STABILITY_REWARD = 25  
-SHOW_EVERY = 10
-EPS_DECAY = 0.9999 
+class OpedTrainer:
+    def __init__(self):
+        self.SAMPLE_BATCH_SIZE = 20
+        self.EPISODES          = 10000
 
-start_q_table = None  
+        self.oped              = Quadruped()
+        self.floor             = Floor()
+        self.STATE_SPACE       = self.oped.STATE_SPACE
+        self.ACTION_SIZE       = self.oped.ACTION_N
+        self.MAX_EPISODE       = self.oped.MAX_EPISODE
+        self.STATS_EVERY       = 20
+        self.agent             = Agent(self.STATE_SPACE, self.ACTION_SIZE, self.EPISODES)        
+        self.floor_position_x  = 0
+        self.floor_position_y  = 0
+        self.set_point_floor_x_adder = 0
+        self.set_point_floor_y_adder = 0
+        self.now               = datetime.now()
+        self.dt_start_string   = self.now.strftime("%d-%m-%Y_%H:%M")
 
-LEARNING_RATE = 0.1
-DISCOUNT = 0.95
+    
+    def getFloorSetPoint(self):
+        self.floor_position_x = 0
+        self.floor_position_y = 0
 
-MIN_DEGREE = -11
-MAX_DEGREE = 68 #57.2958
-IMU_MIN_DEGREE = -15*3/2
-IMU_MAX_DEGREE = 15*3/2 #57.2958
-LIMIT_IMU = 15
-
-start_q_table = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleop/src/qtable.pickle"
-
-oped = Quadruped()
-floor = Floor()
-
-def getData():
-    data = oped.getInfo()
-    lf = data['lf']
-    lh = data['lh']
-    rf = data['rf']
-    rh = data['rh']
-    x = data['x']
-    y = data['y']
-    z = data['z']
-    return lf, lh, rf, rh, x, y, z
+        # if np.random.rand() < 0.5:
+        #     self.set_point_floor_x_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+        # else:
+        #     self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+        
+        if np.random.rand() < 0.5:
+            self.set_point_floor_y_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+        else:
+            self.set_point_floor_y_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
 
 
-def train():
+    def resetEnvironment(self):
+        self.floor.setInitialPosition()
+        self.oped.setInitialPosition()
+        rospy.sleep(0.2)
+        self.oped.resetWorld()
+        rospy.sleep(0.5)
+        self.getFloorSetPoint()
+        return self.oped.getState()
+
+    
+    def floorStep(self):
+        self.floor.setPosition(self.floor_position_y, self.floor_position_x)
+        self.floor_position_x += self.set_point_floor_x_adder
+        self.floor_position_y += self.set_point_floor_y_adder
+
+    
+    def saveRewardValue(self, my_dict):
+        self.now = datetime.now()
+        dt_string = self.now.strftime("%d-%m-%Y_%H:%M")
+
+        dict_model   = {"lr":self.agent.LEARNING_RATE,
+                        "gamma":self.agent.GAMMA,
+                        "move_step":self.oped.MOVE_STEP,
+                        "limit_upright":self.oped.LIMIT_UPRIGHT,
+                        "action_size":self.oped.ACTION_N,
+                        "start_date":self.dt_start_string,
+                        "end_date":dt_string,
+                        "rewards":my_dict}
+
+        path = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/rewards/reward" + dt_string + ".json"
+        with open(path, 'w') as fp:
+            json.dump(dict_model, fp)
+
+
+
+    def run(self):
+        ep_rewards = []
+        aggr_ep_rewards = {'ep': [], 'avg': [], 'max': [], 'min': []}
+        try:
+            for index_episode in range(self.EPISODES):
+                print()
+                # print("Reset Environment")
+                state = self.resetEnvironment()
+                discrete_state = self.agent.getDiscreteState(state)
+                print("state: ", state)
+                print("disecrete_state: ", discrete_state)
+
+                done = False
+                episode_reward = 0
+                index = 0 
+                while not done:
+                    action = self.agent.action(discrete_state)
+
+                    next_state, reward, done = self.oped.step(action)
+                    new_discrete_state = self.agent.getDiscreteState(next_state)
+                    episode_reward += reward
+
+                    self.floorStep()
+                    # print(next_state)
+                    index += 1
+                    if not done:
+                        self.agent.updateModel(discrete_state, new_discrete_state, action, reward)
+                    
+                    rate.sleep()    
+                    discrete_state = new_discrete_state
+                
+                self.agent.updateExplorationRate(index_episode)
+                print("Episode {}, index: {}, # Reward: {}".format(index_episode, index, episode_reward))
+                print("Exploration: {}, x: {}, y: {}".format(self.agent.exploration_rate, self.floor_position_x, self.floor_position_y))
+               
+                ep_rewards.append(episode_reward)
+                if not index_episode % self.STATS_EVERY:
+                    average_reward = sum(ep_rewards[-self.STATS_EVERY:])/self.STATS_EVERY
+                    aggr_ep_rewards['ep'].append(index_episode)
+                    aggr_ep_rewards['avg'].append(average_reward)
+                    aggr_ep_rewards['max'].append(max(ep_rewards[-self.STATS_EVERY:]))
+                    aggr_ep_rewards['min'].append(min(ep_rewards[-self.STATS_EVERY:]))
+                    print("Episode: {}, average reward: {}".format(index_episode, average_reward))
+                    ep_rewards = []
+
+        finally:
+            self.agent.saveModel()
+            # reward_cumulative = {"aggr_rewards":aggr_ep_rewards, "rewards":ep_rewards}
+            self.saveRewardValue(aggr_ep_rewards)
+
+            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label="average rewards")
+            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['max'], label="max rewards")
+            plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['min'], label="min rewards")
+            plt.legend(loc=4)
+            plt.show()
+
+
+if __name__ == "__main__":
     rospy.init_node('train', anonymous=True)
-    rate = rospy.Rate(120) # 10hz
-    rospy.loginfo("Loading q-table")
-
-    if start_q_table is None:
-        # initialize the q-table#
-        q_table = {}
-        for leg1 in range(MIN_DEGREE+3, MAX_DEGREE, 8):
-            for leg2 in range(MIN_DEGREE+3, MAX_DEGREE, 8):
-                for leg3 in range(MIN_DEGREE+3, MAX_DEGREE, 8):
-                    for leg4 in range(MIN_DEGREE+3, MAX_DEGREE, 8):
-                        for pitch in range(-LIMIT_IMU, LIMIT_IMU+1, 3):
-                            for roll in range(-LIMIT_IMU, LIMIT_IMU+1, 3):
-                                q_table[leg1,leg2,leg3,leg4,pitch,roll] = [np.random.uniform(-5, 0) for i in range(8)]
-
-    # else:
-    #     with open(start_q_table, "rb") as f:
-    #         q_table = pickle.load(f)
-
-    epsilon = 0.5  
-    episode_rewards = []
-    rospy.loginfo("Start training...")
-
-    for episode in range(HM_EPISODES):
-
-        rospy.loginfo("Resetting World")
-        floor.setInitialPosition()
-        oped.setInitialPosition()
-        rospy.sleep(0.5)
-        floor.resetWorld()
-        rospy.sleep(0.5)
-
-
-        floor_position_x = 0
-        floor_position_y = 0
-        set_point_floor_x_adder = np.random.uniform(floor.MIN_DEGREE, floor.MAX_DEGREE)/300
-        set_point_floor_y_adder = np.random.uniform(floor.MIN_DEGREE, floor.MAX_DEGREE)/300
-
-        # if episode % SHOW_EVERY == 0:
-        rospy.loginfo("on #" + str(episode) + ", epsilon is " + str(epsilon))
-        # rospy.loginfo(str(SHOW_EVERY) + " ep mean: " + str(np.mean(episode_rewards[-SHOW_EVERY:])))
-
-        episode_reward = 0
-        for i in range(300):
-            x = np.random.randint(0,9)
-
-            floor.setPosition(floor_position_x, floor_position_y)
-            floor_position_x += set_point_floor_x_adder
-            floor_position_y += set_point_floor_y_adder
-
-            action = oped.action(x)
-            lf, lh, rf, rh, x, y, z = getData()
-
-            if ((x < IMU_MIN_DEGREE or x > IMU_MAX_DEGREE) or (y < IMU_MIN_DEGREE or y > IMU_MAX_DEGREE)):
-                rospy.loginfo("Break")
-                break
-            
-            # obs = (player-food, player-enemy)
-            # #print(obs)
-            # if np.random.random() > epsilon:
-            #     # GET THE ACTION
-            #     action = np.argmax(q_table[obs])
-            # else:
-            #     action = np.random.randint(0, 4)
-            # # Take the action!
-            # player.action(action)
-
-            # #### MAYBE ###
-            # #enemy.move()
-            # #food.move()
-            # ##############
-
-            # if player.x == enemy.x and player.y == enemy.y:
-            #     reward = -ENEMY_PENALTY
-            # elif player.x == food.x and player.y == food.y:
-            #     reward = FOOD_REWARD
-            # else:
-            #     reward = -MOVE_PENALTY
-            # ## NOW WE KNOW THE REWARD, LET'S CALC YO
-            # # first we need to obs immediately after the move.
-            # new_obs = (player-food, player-enemy)
-            # max_future_q = np.max(q_table[new_obs])
-            # current_q = q_table[obs][action]
-
-            # if reward == FOOD_REWARD:
-            #     new_q = FOOD_REWARD
-            # else:
-            #     new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-            # q_table[obs][action] = new_q
-
-            # if show:
-            #     env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)  # starts an rbg of our size
-            #     env[food.x][food.y] = d[FOOD_N]  # sets the food location tile to green color
-            #     env[player.x][player.y] = d[PLAYER_N]  # sets the player tile to blue
-            #     env[enemy.x][enemy.y] = d[ENEMY_N]  # sets the enemy location to red
-            #     img = Image.fromarray(env, 'RGB')  # reading to rgb. Apparently. Even tho color definitions are bgr. ???
-            #     img = img.resize((300, 300))  # resizing so we can see our agent in all its glory.
-            #     cv2.imshow("image", np.array(img))  # show it!
-            #     if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:  # crummy code to hang at the end if we reach abrupt end for good reasons or not.
-            #         if cv2.waitKey(500) & 0xFF == ord('q'):
-            #             break
-            #     else:
-            #         if cv2.waitKey(1) & 0xFF == ord('q'):
-            #             break
-
-            # episode_reward += reward
-            # if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
-            #     break
-
-            rate.sleep()
-
-        #print(episode_reward)
-        episode_rewards.append(episode_reward)
-        epsilon *= EPS_DECAY
-
-    # moving_avg = np.convolve(episode_rewards, np.ones((SHOW_EVERY,))/SHOW_EVERY, mode='valid')
-
-    # plt.plot([i for i in range(len(moving_avg))], moving_avg)
-    # plt.ylabel(f"Reward {SHOW_EVERY}ma")
-    # plt.xlabel("episode #")
-    # plt.show()
-
-    # with open(f"qtable-{int(time.time())}.pickle", "wb") as f:
-    #     pickle.dump(q_table, f)
-
-    # with open("/home/dayatsa/model_editor_models/oped/src/oped/oped_teleop/src/qtable.pickle", "wb") as f:
-    #     pickle.dump(q_table, f)
-
-
-if __name__ == '__main__':
-    try:
-        train()
-    except rospy.ROSInterruptException:
-        pass
+    rate = rospy.Rate(25) # 
+    oped_agent = OpedTrainer()
+    oped_agent.run()
