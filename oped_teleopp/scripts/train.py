@@ -19,7 +19,7 @@ from floor_controller import *
 class OpedTrainer:
     def __init__(self):
         self.SAMPLE_BATCH_SIZE = 20
-        self.EPISODES          = 10000
+        self.EPISODES          = 1000
 
         self.oped              = Quadruped()
         self.floor             = Floor()
@@ -52,13 +52,14 @@ class OpedTrainer:
 
 
     def resetEnvironment(self):
+        # rospy.sleep(0.2)
         self.floor.setInitialPosition()
         self.oped.setInitialPosition()
-        rospy.sleep(0.2)
+        rospy.sleep(0.3)
         self.oped.resetWorld()
         rospy.sleep(0.5)
         self.getFloorSetPoint()
-        return self.oped.getState()
+        return self.oped.getStateY(), self.oped.getStateX()
 
     
     def floorStep(self):
@@ -93,29 +94,35 @@ class OpedTrainer:
             for index_episode in range(self.EPISODES):
                 print()
                 # print("Reset Environment")
-                state = self.resetEnvironment()
-                discrete_state = self.agent.getDiscreteState(state)
-                print("state: ", state)
-                print("disecrete_state: ", discrete_state)
+                state_y, state_x = self.resetEnvironment()
+                print("state: ", state_y, state_x)
+                discrete_state_y = self.agent.getDiscreteState(state_y)
+                discrete_state_x = self.agent.getDiscreteState(state_x)
+                print("disecrete_state: ", discrete_state_y, discrete_state_x)
 
                 done = False
                 episode_reward = 0
                 index = 0 
                 while not done:
-                    action = self.agent.action(discrete_state)
+                    action_y = self.agent.action(discrete_state_y, is_y=True)
+                    # action_x = self.agent.action(discrete_state_x, is_y=False)
+                    action_x = 0
 
-                    next_state, reward, done = self.oped.step(action)
-                    new_discrete_state = self.agent.getDiscreteState(next_state)
-                    episode_reward += reward
+                    next_state_y, next_state_x, reward_y, reward_x, done = self.oped.step(action_y, action_x)
+                    new_discrete_state_y = self.agent.getDiscreteState(next_state_y)
+                    # new_discrete_state_x = self.agent.getDiscreteState(next_state_x)
+                    episode_reward = episode_reward + reward_y #+ reward_x
 
                     self.floorStep()
-                    # print(next_state)
+                    # print(next_state_y, next_state_x)
                     index += 1
                     if not done:
-                        self.agent.updateModel(discrete_state, new_discrete_state, action, reward)
+                        self.agent.updateModel(discrete_state_y, new_discrete_state_y, action_y, reward_y, is_y=True)
+                        # self.agent.updateModel(discrete_state_x, new_discrete_state_x, action_x, reward_x, is_y=False)
                     
                     rate.sleep()    
-                    discrete_state = new_discrete_state
+                    discrete_state_y = new_discrete_state_y
+                    # discrete_state_x = new_discrete_state_x
                 
                 self.agent.updateExplorationRate(index_episode)
                 print("Episode {}, index: {}, # Reward: {}".format(index_episode, index, episode_reward))
@@ -133,7 +140,6 @@ class OpedTrainer:
 
         finally:
             self.agent.saveModel()
-            # reward_cumulative = {"aggr_rewards":aggr_ep_rewards, "rewards":ep_rewards}
             self.saveRewardValue(aggr_ep_rewards)
 
             plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label="average rewards")

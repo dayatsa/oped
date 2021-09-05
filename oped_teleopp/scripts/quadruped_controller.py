@@ -49,6 +49,7 @@ class Leg(object):
         self.rh = 0.0
         self.initial_position = 30.0
         self.leg_y = 0.0
+        self.leg_x = 0.0
         self.leg_position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_names = ['lf_hip_joint', 'lf_upper_leg_joint', 'lf_lower_leg_joint', 'lh_hip_joint', 'lh_upper_leg_joint', 'lh_lower_leg_joint', 'rf_hip_joint', 'rf_upper_leg_joint', 'rf_lower_leg_joint', 'rh_hip_joint', 'rh_upper_leg_joint', 'rh_lower_leg_joint']
         
@@ -64,14 +65,15 @@ class Leg(object):
         return lf, lh, rf, rh
 
 
-    def addPosition(self, step_y):
+    def addPosition(self, step_y, step_x):
 
         self.leg_y = self.leg_y + step_y*self.MOVE_STEP
+        self.leg_x = self.leg_x + step_x*self.MOVE_STEP
 
-        self.lf = self.initial_position + self.leg_y
-        self.lh = self.initial_position - self.leg_y
-        self.rf = self.initial_position + self.leg_y
-        self.rh = self.initial_position - self.leg_y
+        self.lf = self.initial_position + self.leg_y + self.leg_x
+        self.lh = self.initial_position - self.leg_y + self.leg_x
+        self.rf = self.initial_position + self.leg_y - self.leg_x
+        self.rh = self.initial_position - self.leg_y - self.leg_x
 
         if self.lf > self.MAX_DEGREE:
             self.lf = self.MAX_DEGREE
@@ -119,6 +121,7 @@ class Leg(object):
     
     def setInitialPosition(self):
         self.leg_y = 0.0
+        self.leg_x = 0.0
         self.lf = 30.0
         self.lh = 30.0
         self.rf = 30.0
@@ -153,7 +156,7 @@ class Quadruped(Leg, MyImu) :
         self.y = 0.0
         self.z = 0.8
         self.MODEL_URDF = '/home/dayatsa/model_editor_models/oped/src/oped/oped_description/urdf/oped.urdf'
-        self.ACTION_N = 2
+        self.ACTION_N = 3
         self.STATE_SPACE = 2
         self.MAX_EPISODE = 200
         self.episode_step = 0
@@ -165,44 +168,59 @@ class Quadruped(Leg, MyImu) :
         return str(self.x + ", " + self.y + ", " + self.z)
 
 
-    def step(self, choice):
+    def step(self, choice1, choice2):
         '''
-        Gives us 2 total movement options.
+        Gives us 3 total movement options.
         '''
         self.episode_step += 1
 
-        if choice == 0:
-            self.addPosition(1)
-        elif choice == 1:
-            self.addPosition(-1)
+        step_y = 0
+        step_x = 0
 
+        if choice1 == 0:
+            step_y = 0
+        elif choice1 == 1:
+            step_y = -1
+        elif choice1 == 2:
+            step_y = 1
 
-        new_state = self.getState()
-        # x = new_state[4]
-        y = new_state[1]
+        if choice2 == 0:
+            step_x = 0
+        elif choice2 == 1:
+            step_x = -1
+        elif choice2 == 2:
+            step_x = 1
+
+        self.addPosition(step_y, step_x)  
+
+        new_state_imu = self.getImuData()
+        y = new_state_imu[1]
+        x = new_state_imu[0]
 
         #reward
-        reward = 0
-        # if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
-        #     reward += 100
-        # else:
-        #     if x < 0:
-        #         reward += x
-        #     else:
-        #         reward -= x
+        reward_y = 0
+        reward_x = 0
 
         if y > -self.LIMIT_UPRIGHT and y < self.LIMIT_UPRIGHT:
-            reward += 100
+            reward_y += 100
         else:
             if y < 0:
-                reward += y
+                reward_y += y
             else:
-                reward -= y
+                reward_y -= y
+        
+        if x > -self.LIMIT_UPRIGHT and x < self.LIMIT_UPRIGHT:
+            reward_x += 100
+        else:
+            if x < 0:
+                reward_x += x
+            else:
+                reward_x -= x
 
         done = False
-        # if (x < self.IMU_MIN_DEGREE or x > self.IMU_MAX_DEGREE):
-        #     done = True
-        #     rospy.loginfo("x imu")
+        if (x < self.IMU_MIN_DEGREE or x > self.IMU_MAX_DEGREE):
+            done = True
+            rospy.loginfo("x imu")
         if (y < self.IMU_MIN_DEGREE or y > self.IMU_MAX_DEGREE):
             done = True
             rospy.loginfo("y imu")
@@ -211,7 +229,7 @@ class Quadruped(Leg, MyImu) :
             rospy.loginfo("max_episode")
 
         # rospy.loginfo("Step" + str(self.episode_step) + " : " + str(done))
-        return new_state, reward, done
+        return self.getStateY(), self.getStateX(), reward_y, reward_x, done
 
 
     def resetWorld(self):
@@ -252,7 +270,12 @@ class Quadruped(Leg, MyImu) :
         return data
 
     
-    def getState(self):
+    def getStateY(self):
         imu_data = self.getImuData()
         data = [self.leg_y, imu_data[1]]
+        return data
+
+    def getStateX(self):
+        imu_data = self.getImuData()
+        data = [self.leg_x, imu_data[0]]
         return data
