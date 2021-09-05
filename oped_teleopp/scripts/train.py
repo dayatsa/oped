@@ -86,6 +86,18 @@ class OpedTrainer:
             json.dump(dict_model, fp)
 
 
+    def checkRobot(self, state_x, state_y):
+        if (state_x[1] < -5 or state_x[1] > 5 or state_y[1] < -5 or state_y[1] > 5):
+            if self.counter_end == 0:
+                self.counter_end += 1 
+                self.last_counter = True
+            elif self.last_counter == True:
+                self.counter_end += 1
+
+        else:
+            self.counter_end = 0
+            self.last_counter = False
+
 
     def run(self):
         ep_rewards = []
