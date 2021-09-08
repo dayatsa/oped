@@ -19,7 +19,7 @@ class Agent():
     def __init__(self, state_size, action_size, episodes):
         self.is_weight_backup   = True
         self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_"
-        self.WEIGHT_LOAD_Y      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_y_05-09-2021_20:15.npy"
+        self.WEIGHT_LOAD_Y      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_y_08-09-2021_09:34.npy"
         self.WEIGHT_LOAD_X      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_x_05-09-2021_11:51.npy"
         self.STATE_SIZE         = state_size
         self.ACTION_SIZE        = action_size
@@ -48,7 +48,9 @@ class Agent():
             print("\n\n================LOADING Q-TABLE===============\n\n")
             print(directory)
             q_table = np.load(directory)
-            self.exploration_rate = self.EXPLORATION_MIN
+            # self.END_EXPLORATION_DECAY = 560
+            self.exploration_rate = 0.137
+            # self.exploration_rate = self.EXPLORATION_MIN
         print(q_table.shape)
         return q_table
     
