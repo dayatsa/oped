@@ -37,6 +37,7 @@ class OpedTrainer:
         self.last_counter      = False
         self.counter_end       = 0
         self.max_avg_reward    = 4000
+        self.lift              = False
 
     
     def getFloorSetPoint(self):
@@ -48,10 +49,13 @@ class OpedTrainer:
         # else:
         #     self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
         
-        if np.random.rand() <= 0.5:
+        # if np.random.rand() <= 0.5:
+        if self.lift == True:
             self.set_point_floor_y_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+            self.lift = False
         else:
             self.set_point_floor_y_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+            self.lift = True
 
 
     def resetEnvironment(self):
