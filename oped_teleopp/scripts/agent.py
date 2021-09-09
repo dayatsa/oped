@@ -18,9 +18,9 @@ from collections      import deque
 class Agent():
     def __init__(self, state_size, action_size, episodes):
         self.is_weight_backup   = True
-        self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_"
-        self.WEIGHT_LOAD_Y      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_y_07-09-2021_07:43.npy"
-        self.WEIGHT_LOAD_X      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/model_x_05-09-2021_11:51.npy"
+        self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/"
+        self.WEIGHT_LOAD_Y      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/y/model_y_08-09-2021_15:11.npy"
+        self.WEIGHT_LOAD_X      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/x/model_x_08-09-2021_21:48.npy"
         self.STATE_SIZE         = state_size
         self.ACTION_SIZE        = action_size
         self.LEARNING_RATE      = 0.1
@@ -50,7 +50,7 @@ class Agent():
             q_table = np.load(directory)
             # self.END_EXPLORATION_DECAY = 560
             # self.exploration_rate = 0.137
-            # self.exploration_rate = self.EXPLORATION_MIN
+            self.exploration_rate = self.EXPLORATION_MIN
         print(q_table.shape)
         return q_table
     
@@ -73,8 +73,8 @@ class Agent():
     def saveModel(self):
         now = datetime.now()
         dt_string = now.strftime("%d-%m-%Y_%H:%M")
-        np.save(self.WEIGHT_BACKUP + "y_" + dt_string + ".npy", self.q_table_y)
-        # np.save(self.WEIGHT_BACKUP + "x_" + dt_string + ".npy", self.q_table_x)
+        # np.save(self.WEIGHT_BACKUP + "y_" + dt_string + ".npy", self.q_table_y)
+        np.save(self.WEIGHT_BACKUP + "x/model_x_" + dt_string + ".npy", self.q_table_x)
 
 
     def action(self, state, is_y):

@@ -45,17 +45,20 @@ class OpedTrainer:
         self.floor_position_y = 0
 
         # if np.random.rand() <= 0.5:
-        #     self.set_point_floor_x_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
-        # else:
-        #     self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
-        
-        # if np.random.rand() <= 0.5:
         if self.lift == True:
-            self.set_point_floor_y_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+            self.set_point_floor_x_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
             self.lift = False
         else:
-            self.set_point_floor_y_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+            self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
             self.lift = True
+        
+        # if np.random.rand() <= 0.5:
+        # if self.lift == True:
+        #     self.set_point_floor_y_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+        #     self.lift = False
+        # else:
+        #     self.set_point_floor_y_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+        #     self.lift = True
 
 
     def resetEnvironment(self):
@@ -88,7 +91,7 @@ class OpedTrainer:
                         "end_date":dt_string,
                         "rewards":my_dict}
 
-        path = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/rewards/reward" + dt_string + ".json"
+        path = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/rewards/x/reward_x_" + dt_string + ".json"
         with open(path, 'w') as fp:
             json.dump(dict_model, fp)
 
@@ -126,25 +129,25 @@ class OpedTrainer:
                     episode_reward = 0
                     index = 0 
                     while not done:
-                        action_y = self.agent.action(discrete_state_y, is_y=True)
-                        # action_x = self.agent.action(discrete_state_x, is_y=False)
-                        action_x = 0
+                        # action_y = self.agent.action(discrete_state_y, is_y=True)
+                        action_x = self.agent.action(discrete_state_x, is_y=False)
+                        action_y = 0
 
                         next_state_y, next_state_x, reward_y, reward_x, done = self.oped.step(action_y, action_x)
-                        new_discrete_state_y = self.agent.getDiscreteState(next_state_y)
-                        # new_discrete_state_x = self.agent.getDiscreteState(next_state_x)
-                        episode_reward = episode_reward + reward_y #+ reward_x
+                        # new_discrete_state_y = self.agent.getDiscreteState(next_state_y)
+                        new_discrete_state_x = self.agent.getDiscreteState(next_state_x)
+                        episode_reward = episode_reward + reward_x #+ reward_x
 
                         self.floorStep()
-                        # print(next_state_y, next_state_x)
+                        print(next_state_y, next_state_x)
                         index += 1
-                        if not done:
-                            self.agent.updateModel(discrete_state_y, new_discrete_state_y, action_y, reward_y, is_y=True)
+                        # if not done:
+                            # self.agent.updateModel(discrete_state_y, new_discrete_state_y, action_y, reward_y, is_y=True)
                             # self.agent.updateModel(discrete_state_x, new_discrete_state_x, action_x, reward_x, is_y=False)
                         
                         rate.sleep()    
-                        discrete_state_y = new_discrete_state_y
-                        # discrete_state_x = new_discrete_state_x
+                        # discrete_state_y = new_discrete_state_y
+                        discrete_state_x = new_discrete_state_x
                     
                     self.agent.updateExplorationRate(index_episode)
                     print("Episode {}, index: {}, # Reward: {}".format(index_episode, index, episode_reward))
@@ -159,18 +162,18 @@ class OpedTrainer:
                         aggr_ep_rewards['min'].append(min(ep_rewards[-self.STATS_EVERY:]))
                         print("Episode: {}, average reward: {}, cur_max: {}".format(index_episode, average_reward, self.max_avg_reward))
                         ep_rewards = []
-                        if(average_reward > self.max_avg_reward):
-                            self.agent.saveModel()
-                            self.saveRewardValue(aggr_ep_rewards)
-                            self.max_avg_reward = average_reward
+                        # if(average_reward > self.max_avg_reward):
+                            # self.agent.saveModel()
+                            # self.saveRewardValue(aggr_ep_rewards)
+                            # self.max_avg_reward = average_reward
 
                 else:
                     print("END TRAINING")
                     break
 
         finally:
-            self.agent.saveModel()
-            self.saveRewardValue(aggr_ep_rewards)
+            # self.agent.saveModel()
+            # self.saveRewardValue(aggr_ep_rewards)
 
             plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label="average rewards")
             plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['max'], label="max rewards")

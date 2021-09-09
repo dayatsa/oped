@@ -70,10 +70,10 @@ class Leg(object):
         self.leg_y = self.leg_y + step_y*self.MOVE_STEP
         self.leg_x = self.leg_x + step_x*self.MOVE_STEP
 
-        self.lf = self.initial_position + self.leg_y + self.leg_x
-        self.lh = self.initial_position - self.leg_y + self.leg_x
-        self.rf = self.initial_position + self.leg_y - self.leg_x
-        self.rh = self.initial_position - self.leg_y - self.leg_x
+        self.lf = self.initial_position + self.leg_y - self.leg_x
+        self.lh = self.initial_position - self.leg_y - self.leg_x
+        self.rf = self.initial_position + self.leg_y + self.leg_x
+        self.rh = self.initial_position - self.leg_y + self.leg_x
 
         if self.lf > self.MAX_DEGREE:
             self.lf = self.MAX_DEGREE
