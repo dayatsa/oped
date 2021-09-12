@@ -50,6 +50,10 @@ class Leg(object):
         self.initial_position = 30.0
         self.leg_y = 0.0
         self.leg_x = 0.0
+        self.last_lf = 0.0
+        self.last_lh = 0.0
+        self.last_rf = 0.0
+        self.last_rh = 0.0
         self.leg_position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_names = ['lf_hip_joint', 'lf_upper_leg_joint', 'lf_lower_leg_joint', 'lh_hip_joint', 'lh_upper_leg_joint', 'lh_lower_leg_joint', 'rf_hip_joint', 'rf_upper_leg_joint', 'rf_lower_leg_joint', 'rh_hip_joint', 'rh_upper_leg_joint', 'rh_lower_leg_joint']
         
@@ -75,6 +79,12 @@ class Leg(object):
         self.rf = self.initial_position + self.leg_y + self.leg_x
         self.rh = self.initial_position - self.leg_y + self.leg_x
 
+        if (self.lf > 40 or self.lf < -40 or self.lh > 40 or self.lh < -40 or self.rf > 40 or self.rf < -40 or self.rh > 40 or self.rh < -40):
+            self.lf = self.last_lf
+            self.lh = self.last_lh
+            self.rf = self.last_rf
+            self.rh = self.last_rh
+
         if self.lf > self.MAX_DEGREE:
             self.lf = self.MAX_DEGREE
         if self.lh > self.MAX_DEGREE:
@@ -92,6 +102,11 @@ class Leg(object):
             self.rf = self.MIN_DEGREE
         if self.rh < self.MIN_DEGREE:
             self.rh = self.MIN_DEGREE          
+
+        self.last_lf = self.lf
+        self.last_lh = self.lh
+        self.last_rf = self.rf
+        self.last_rh = self.rh
 
         self.setPosition(self.lf, self.lh, self.rf, self.rh)
 
