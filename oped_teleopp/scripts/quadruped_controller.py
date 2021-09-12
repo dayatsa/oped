@@ -40,7 +40,8 @@ class Leg(object):
     def __init__(self):
         self.RAD_PER_DEG = 0.017453293
         self.MIN_DEGREE = -11.4592
-        self.MAX_DEGREE = 68.7549 #57.2958
+        # self.MAX_DEGREE = 68.7549 #57.2958
+        self.MAX_DEGREE = 70 #57.2958
         self.MOVE_STEP = 1.0
 
         self.lf = 0.0
@@ -78,8 +79,9 @@ class Leg(object):
         self.lh = self.initial_position - self.leg_y - self.leg_x
         self.rf = self.initial_position + self.leg_y + self.leg_x
         self.rh = self.initial_position - self.leg_y + self.leg_x
+        print(self.lf, self.lh, self.rf, self.rh)
 
-        if (self.lf > 40 or self.lf < -40 or self.lh > 40 or self.lh < -40 or self.rf > 40 or self.rf < -40 or self.rh > 40 or self.rh < -40):
+        if (self.lf > self.MAX_DEGREE or self.lf < self.MIN_DEGREE or self.lh > self.MAX_DEGREE or self.lh < self.MIN_DEGREE or self.rf > self.MAX_DEGREE or self.rf < self.MIN_DEGREE or self.rh > self.MAX_DEGREE or self.rh < self.MIN_DEGREE):
             self.lf = self.last_lf
             self.lh = self.last_lh
             self.rf = self.last_rf
@@ -108,6 +110,8 @@ class Leg(object):
         self.last_rf = self.rf
         self.last_rh = self.rh
 
+        print(self.lf, self.lh, self.rf, self.rh)
+        
         self.setPosition(self.lf, self.lh, self.rf, self.rh)
 
 

@@ -44,13 +44,13 @@ class OpedTrainer:
         self.floor_position_x = 0
         self.floor_position_y = 0
 
-        # if np.random.rand() <= 0.5:
-        # # if self.lift == True:
-        #     self.set_point_floor_x_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
-        #     self.lift = False
-        # else:
-        #     self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
-        #     self.lift = True
+        if np.random.rand() <= 0.5:
+        # if self.lift == True:
+            self.set_point_floor_x_adder = np.random.uniform(5, self.floor.MAX_DEGREE)/self.MAX_EPISODE
+            self.lift = False
+        else:
+            self.set_point_floor_x_adder = np.random.uniform(self.floor.MIN_DEGREE, -5)/self.MAX_EPISODE
+            self.lift = True
         
         if np.random.rand() <= 0.5:
         # if self.lift == True:
@@ -136,7 +136,7 @@ class OpedTrainer:
                         next_state_y, next_state_x, reward_y, reward_x, done = self.oped.step(action_y, action_x)
                         new_discrete_state_y = self.agent.getDiscreteState(next_state_y)
                         new_discrete_state_x = self.agent.getDiscreteState(next_state_x)
-                        episode_reward = episode_reward + reward_x #+ reward_x
+                        episode_reward = episode_reward + reward_x + reward_y
 
                         self.floorStep()
                         print(next_state_y, next_state_x)

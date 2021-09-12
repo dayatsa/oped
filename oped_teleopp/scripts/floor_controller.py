@@ -18,8 +18,8 @@ class Joint(object):
     def __init__(self):
         self.RAD_PER_DEG = 0.017453293
         self.DEG_PER_RAD = 57.29577951
-        self.MIN_DEGREE = -15
-        self.MAX_DEGREE = 15    #57.2958
+        self.MIN_DEGREE = -10
+        self.MAX_DEGREE = 10    #57.2958
         self.MOVE_STEP = 8
 
         self.joint1 = 0
