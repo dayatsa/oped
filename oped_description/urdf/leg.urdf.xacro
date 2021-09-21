@@ -163,7 +163,7 @@
         <joint name="${leg}_upper_leg_joint" type="revolute">
             <axis xyz="0 1 0" />
             <!-- <limit effort="1000" lower="-${pi}" upper="${pi}" velocity="1.5" /> -->
-            <limit effort="1000" lower="-1.5" upper="1.5" velocity="1.5" />
+            <limit effort="1000" lower="-2" upper="2" velocity="1.5" />
             <!-- <limit effort="1000" lower="-0.68" upper="0.68" velocity="1.5" /> -->
             <parent link="${leg}_hip_link" />
             <child link="${leg}_upper_leg_link" />
@@ -178,19 +178,19 @@
             <parent link="${leg}_upper_leg_link" />
             <child link="${leg}_lower_leg_link" />
             <xacro:if value="${leg == 'lf'}">
-                <limit effort="1000" lower="-1.8" upper="0.5" velocity="1.5" />
+                <limit effort="1000" lower="-3" upper="0.5" velocity="1.5" />
                 <origin xyz="0 0.0015 -${upper_leg_to_lower_leg_distance}" rpy="0 0 0" />
             </xacro:if>
             <xacro:if value="${leg == 'lh'}">
-                <limit effort="1000" lower="-0.5" upper="1.8" velocity="1.5" />
+                <limit effort="1000" lower="-0.5" upper="3" velocity="1.5" />
                 <origin xyz="0 0.0015 -${upper_leg_to_lower_leg_distance}" rpy="0 0 0" />
             </xacro:if>
             <xacro:if value="${leg == 'rf'}">
-                <limit effort="1000" lower="-1.8" upper="0.5" velocity="1.5" />
+                <limit effort="1000" lower="-3" upper="0.5" velocity="1.5" />
                 <origin xyz="0 -0.002 -${upper_leg_to_lower_leg_distance}" rpy="0 0 0" />
             </xacro:if>
             <xacro:if value="${leg == 'rh'}">
-                <limit effort="1000" lower="-0.5" upper="1.8" velocity="1.5" />
+                <limit effort="1000" lower="-0.5" upper="3" velocity="1.5" />
                 <origin xyz="0 -0.002 -${upper_leg_to_lower_leg_distance}" rpy="0 0 0" />
             </xacro:if>
         </joint>

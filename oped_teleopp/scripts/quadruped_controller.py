@@ -20,8 +20,8 @@ class MyImu(object):
         self.orientation_z = 0
         self.DEG_PER_RAD = 57.29577951
         self.LIMIT_UPRIGHT = 0.5
-        self.IMU_MIN_DEGREE = -15*3/2
-        self.IMU_MAX_DEGREE = 15*3/2
+        self.IMU_MIN_DEGREE = -10
+        self.IMU_MAX_DEGREE = 10
         imu_subsriber = rospy.Subscriber("/imu_oped/data", Imu, self.imuCallback)
 
 
@@ -41,14 +41,14 @@ class Leg(object):
         self.RAD_PER_DEG = 0.017453293
         self.MIN_DEGREE = -11.4592
         # self.MAX_DEGREE = 68.7549 #57.2958
-        self.MAX_DEGREE = 70 #57.2958
-        self.MOVE_STEP = 1.0
+        self.MAX_DEGREE = 97.4 #57.2958
+        self.MOVE_STEP = 0.29
+        self.MIDDLE_POSITION = 42.975
 
         self.lf = 0.0
         self.lh = 0.0
         self.rf = 0.0
         self.rh = 0.0
-        self.initial_position = 30.0
         self.leg_y = 0.0
         self.leg_x = 0.0
         self.last_lf = 0.0
@@ -75,11 +75,11 @@ class Leg(object):
         self.leg_y = self.leg_y + step_y*self.MOVE_STEP
         self.leg_x = self.leg_x + step_x*self.MOVE_STEP
 
-        self.lf = self.initial_position + self.leg_y - self.leg_x
-        self.lh = self.initial_position - self.leg_y - self.leg_x
-        self.rf = self.initial_position + self.leg_y + self.leg_x
-        self.rh = self.initial_position - self.leg_y + self.leg_x
-        print(self.lf, self.lh, self.rf, self.rh)
+        self.lf = self.MIDDLE_POSITION + self.leg_y - self.leg_x
+        self.lh = self.MIDDLE_POSITION - self.leg_y - self.leg_x
+        self.rf = self.MIDDLE_POSITION + self.leg_y + self.leg_x
+        self.rh = self.MIDDLE_POSITION - self.leg_y + self.leg_x
+        # print(self.lf, self.lh, self.rf, self.rh)
 
         if (self.lf > self.MAX_DEGREE or self.lf < self.MIN_DEGREE or self.lh > self.MAX_DEGREE or self.lh < self.MIN_DEGREE or self.rf > self.MAX_DEGREE or self.rf < self.MIN_DEGREE or self.rh > self.MAX_DEGREE or self.rh < self.MIN_DEGREE):
             self.lf = self.last_lf
@@ -110,7 +110,7 @@ class Leg(object):
         self.last_rf = self.rf
         self.last_rh = self.rh
 
-        print(self.lf, self.lh, self.rf, self.rh)
+        # print(self.lf, self.lh, self.rf, self.rh)
         
         self.setPosition(self.lf, self.lh, self.rf, self.rh)
 
@@ -141,11 +141,11 @@ class Leg(object):
     def setInitialPosition(self):
         self.leg_y = 0.0
         self.leg_x = 0.0
-        self.lf = 30.0
-        self.lh = 30.0
-        self.rf = 30.0
-        self.rh = 30.0
-        self.setPosition(30.0,30.0,30.0,30.0)
+        self.lf = self.MIDDLE_POSITION
+        self.lh = self.MIDDLE_POSITION
+        self.rf = self.MIDDLE_POSITION
+        self.rh = self.MIDDLE_POSITION
+        self.setPosition(self.lf, self.lh, self.rf, self.rh)
 
 
     def publishPosition(self):
@@ -177,7 +177,7 @@ class Quadruped(Leg, MyImu) :
         self.MODEL_URDF = '/home/dayatsa/model_editor_models/oped/src/oped/oped_description/urdf/oped.urdf'
         self.ACTION_N = 3
         self.STATE_SPACE = 2
-        self.MAX_EPISODE = 200
+        self.MAX_EPISODE = 500
         self.episode_step = 0
         Leg.__init__(self)
         MyImu.__init__(self)

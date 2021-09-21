@@ -241,7 +241,7 @@
   <joint name="lf_upper_leg_joint" type="revolute">
     <axis xyz="0 1 0"/>
     <!-- <limit effort="1000" lower="-${pi}" upper="${pi}" velocity="1.5" /> -->
-    <limit effort="1000" lower="-1.5" upper="1.5" velocity="1.5"/>
+    <limit effort="1000" lower="-2" upper="2" velocity="1.5"/>
     <!-- <limit effort="1000" lower="-0.68" upper="0.68" velocity="1.5" /> -->
     <parent link="lf_hip_link"/>
     <child link="lf_upper_leg_link"/>
@@ -254,7 +254,7 @@
     <!-- <limit effort="1000" lower="-2.84" upper="0.54" velocity="1.5" /> -->
     <parent link="lf_upper_leg_link"/>
     <child link="lf_lower_leg_link"/>
-    <limit effort="1000" lower="-1.8" upper="0.5" velocity="1.5"/>
+    <limit effort="1000" lower="-3" upper="0.5" velocity="1.5"/>
     <origin rpy="0 0 0" xyz="0 0.0015 -0.0645"/>
   </joint>
   <joint name="lf_foot_joint" type="fixed">
@@ -384,7 +384,7 @@
   <joint name="lh_upper_leg_joint" type="revolute">
     <axis xyz="0 1 0"/>
     <!-- <limit effort="1000" lower="-${pi}" upper="${pi}" velocity="1.5" /> -->
-    <limit effort="1000" lower="-1.5" upper="1.5" velocity="1.5"/>
+    <limit effort="1000" lower="-2" upper="2" velocity="1.5"/>
     <!-- <limit effort="1000" lower="-0.68" upper="0.68" velocity="1.5" /> -->
     <parent link="lh_hip_link"/>
     <child link="lh_upper_leg_link"/>
@@ -397,7 +397,7 @@
     <!-- <limit effort="1000" lower="-2.84" upper="0.54" velocity="1.5" /> -->
     <parent link="lh_upper_leg_link"/>
     <child link="lh_lower_leg_link"/>
-    <limit effort="1000" lower="-0.5" upper="1.8" velocity="1.5"/>
+    <limit effort="1000" lower="-0.5" upper="3" velocity="1.5"/>
     <origin rpy="0 0 0" xyz="0 0.0015 -0.0645"/>
   </joint>
   <joint name="lh_foot_joint" type="fixed">
@@ -527,7 +527,7 @@
   <joint name="rf_upper_leg_joint" type="revolute">
     <axis xyz="0 1 0"/>
     <!-- <limit effort="1000" lower="-${pi}" upper="${pi}" velocity="1.5" /> -->
-    <limit effort="1000" lower="-1.5" upper="1.5" velocity="1.5"/>
+    <limit effort="1000" lower="-2" upper="2" velocity="1.5"/>
     <!-- <limit effort="1000" lower="-0.68" upper="0.68" velocity="1.5" /> -->
     <parent link="rf_hip_link"/>
     <child link="rf_upper_leg_link"/>
@@ -540,7 +540,7 @@
     <!-- <limit effort="1000" lower="-2.84" upper="0.54" velocity="1.5" /> -->
     <parent link="rf_upper_leg_link"/>
     <child link="rf_lower_leg_link"/>
-    <limit effort="1000" lower="-1.8" upper="0.5" velocity="1.5"/>
+    <limit effort="1000" lower="-3" upper="0.5" velocity="1.5"/>
     <origin rpy="0 0 0" xyz="0 -0.002 -0.0645"/>
   </joint>
   <joint name="rf_foot_joint" type="fixed">
@@ -670,7 +670,7 @@
   <joint name="rh_upper_leg_joint" type="revolute">
     <axis xyz="0 1 0"/>
     <!-- <limit effort="1000" lower="-${pi}" upper="${pi}" velocity="1.5" /> -->
-    <limit effort="1000" lower="-1.5" upper="1.5" velocity="1.5"/>
+    <limit effort="1000" lower="-2" upper="2" velocity="1.5"/>
     <!-- <limit effort="1000" lower="-0.68" upper="0.68" velocity="1.5" /> -->
     <parent link="rh_hip_link"/>
     <child link="rh_upper_leg_link"/>
@@ -683,7 +683,7 @@
     <!-- <limit effort="1000" lower="-2.84" upper="0.54" velocity="1.5" /> -->
     <parent link="rh_upper_leg_link"/>
     <child link="rh_lower_leg_link"/>
-    <limit effort="1000" lower="-0.5" upper="1.8" velocity="1.5"/>
+    <limit effort="1000" lower="-0.5" upper="3" velocity="1.5"/>
     <origin rpy="0 0 0" xyz="0 -0.002 -0.0645"/>
   </joint>
   <joint name="rh_foot_joint" type="fixed">

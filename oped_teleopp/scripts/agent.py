@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 from __future__ import print_function
+from tokenize import triple_quoted
 import rospy
 import roslib; roslib.load_manifest('oped_teleopp')
 import numpy as np
@@ -19,8 +20,8 @@ class Agent():
     def __init__(self, state_size, action_size, episodes):
         self.is_weight_backup   = True
         self.WEIGHT_BACKUP      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/"
-        self.WEIGHT_LOAD_Y      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/y/model_y_08-09-2021_15:11.npy"
-        self.WEIGHT_LOAD_X      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/x/model_x_08-09-2021_21:48.npy"
+        self.WEIGHT_LOAD_Y      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/y/model_y_16-09-2021_07:26.npy"
+        self.WEIGHT_LOAD_X      = "/home/dayatsa/model_editor_models/oped/src/oped/oped_teleopp/model/x/model_x_19-09-2021_07:50.npy"
         self.STATE_SIZE         = state_size
         self.ACTION_SIZE        = action_size
         self.LEARNING_RATE      = 0.1
@@ -31,10 +32,11 @@ class Agent():
         self.EXPLORATION_DECAY  = 1.0/float(self.END_EXPLORATION_DECAY - self.START_EXPLORATION_DECAY)
         print("Exploration decay: {} , {} , {}".format(self.START_EXPLORATION_DECAY, self.END_EXPLORATION_DECAY, self.EXPLORATION_DECAY))
         self.exploration_rate   = 1.0
-        self.DISCRETE_OS_SIZE   = [80, 60]
-        self.DISCRETE_OS_SIZE_Q   = [81, 61]
-        self.observation_space_high = np.array([40.0, 15.0])
-        self.observation_space_low = np.array([-40.0, -15.0])
+        self.DISCRETE_OS_SIZE   = [374, 150]
+        self.DISCRETE_OS_SIZE_Q   = [375, 151]
+        self.MAX_LEG_STATE        = 54.23
+        self.observation_space_high = np.array([self.MAX_LEG_STATE, 15.0])
+        self.observation_space_low = np.array([-self.MAX_LEG_STATE, -15.0])
         self.discrete_os_win_size = (self.observation_space_high - self.observation_space_low)/self.DISCRETE_OS_SIZE
         print("Discrete: ", self.discrete_os_win_size)
         self.q_table_y            = self.buildModel(self.WEIGHT_LOAD_Y)
@@ -49,17 +51,17 @@ class Agent():
             print(directory)
             q_table = np.load(directory)
             # self.END_EXPLORATION_DECAY = 560
-            # self.exploration_rate = 0.137
-            self.exploration_rate = self.EXPLORATION_MIN
+            self.exploration_rate = 0.5
+            # self.exploration_rate = self.EXPLORATION_MIN
         print(q_table.shape)
         return q_table
     
 
     def getDiscreteState(self, state):
-        if (state[0] > 40):
-            state[0] = 40
-        elif (state[0] < -40):
-            state[0] = -40
+        if (state[0] > self.MAX_LEG_STATE):
+            state[0] = self.MAX_LEG_STATE
+        elif (state[0] < -self.MAX_LEG_STATE):
+            state[0] = -self.MAX_LEG_STATE
 
         if (state[1] > 15.0):
             state[1] = 15.0
@@ -73,12 +75,12 @@ class Agent():
     def saveModel(self):
         now = datetime.now()
         dt_string = now.strftime("%d-%m-%Y_%H:%M")
-        # np.save(self.WEIGHT_BACKUP + "y_" + dt_string + ".npy", self.q_table_y)
-        np.save(self.WEIGHT_BACKUP + "x/model_x_" + dt_string + ".npy", self.q_table_x)
+        np.save(self.WEIGHT_BACKUP + "y/model_y_" + dt_string + ".npy", self.q_table_y)
+        # np.save(self.WEIGHT_BACKUP + "x/model_x_" + dt_string + ".npy", self.q_table_x)
 
 
     def action(self, state, is_y):
-        if np.random.rand() > self.exploration_rate:
+        if np.random.random() > self.exploration_rate:
             if is_y:
                 return np.argmax(self.q_table_y[state])
             else:
